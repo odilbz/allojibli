@@ -244,15 +244,17 @@ $('f').addEventListener('submit', async e=>{
 
   $('send').disabled=true; $('send').textContent='جاري الإرسال…';
   try{
-    const r=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    let r;
+    try{ r=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); }
+    catch(_){ throw new Error('net/cors'); }
     const j=await r.json().catch(()=>({}));
-    if(!r.ok||!j.ok) throw new Error(j.error||'failed');
+    if(!r.ok||!j.ok) throw new Error(j.error||('http '+r.status));
     localStorage.setItem('aj_phone',phone); localStorage.setItem('aj_name',body.name);
     $('oid').textContent='#'+j.id; $('ophone').textContent=phone;
     $('formCard').classList.add('hidden'); $('doneCard').classList.remove('hidden');
     window.scrollTo({top:0,behavior:'smooth'});
-  }catch(_){
-    $('err').textContent='ما وصلش الطلب. تأكد من الإنترنت وعاود، ولا اتصل بنا مباشرة.';
+  }catch(err){
+    $('err').textContent='ما وصلش الطلب ['+err.message+']. تأكد من الإنترنت وعاود، ولا اتصل بنا مباشرة.';
   }finally{
     $('send').disabled=false; $('send').textContent='إرسال الطلب';
   }
