@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<title>Allo Jibli 18 — توصيل جيجل</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Allo Jibli">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{
+  --teal:#111111; --teal-d:#000; --sun:#FF7A00; --bg:#EDEDED; --ink:#141414;
+  --mute:#666; --line:#D6D6D6; --ok:#1B8A5A; --err:#C0392B; --card:#fff;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#0B0B0B; --ink:#F2F2F2; --mute:#A8A8A8; --line:#333; --card:#171717;}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{
+  font-family:"Tajawal","Segoe UI",Tahoma,system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.6;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+header{
+  background:var(--teal);color:#fff;
+  padding:calc(env(safe-area-inset-top,0px) + 18px) 20px 54px;
+  border-bottom:5px solid var(--sun);
+}
+header h1 span{color:var(--sun)}
+.call{display:inline-block;margin-top:12px;background:var(--sun);color:#1a0f00;font-weight:800;text-decoration:none;padding:8px 16px;border-radius:999px;direction:ltr}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.chip{border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:6px 14px;font:inherit;font-weight:700;cursor:pointer}
+.chip.on{background:var(--sun);border-color:var(--sun);color:#1a0f00}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem}
+.brand img{width:38px;height:38px;border-radius:10px}
+header h1{margin:18px 0 4px;font-size:1.7rem;line-height:1.3}
+header p{margin:0;opacity:.85}
+main{max-width:560px;margin:-34px auto 0;padding:0 14px 28px}
+.card{background:var(--card);border-radius:18px;padding:18px;box-shadow:0 6px 24px rgba(0,0,0,.14)}
+label{display:block;font-weight:700;margin:16px 0 6px}
+label:first-child{margin-top:0}
+.hint{font-weight:400;color:var(--mute);font-size:.85rem}
+input,textarea{
+  width:100%;font:inherit;color:var(--ink);background:transparent;
+  border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;
+}
+textarea{min-height:96px;resize:vertical}
+input:focus,textarea:focus,button:focus-visible{outline:3px solid var(--sun);outline-offset:1px;border-color:var(--teal)}
+.phone{direction:ltr;text-align:left;letter-spacing:.5px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--bg);padding:5px;border-radius:14px;margin-top:4px}
+.seg button{
+  border:0;border-radius:10px;padding:10px 6px;font:inherit;font-weight:700;
+  background:transparent;color:var(--mute);cursor:pointer
+}
+.seg button.on{background:var(--teal);color:#fff}
+.seg button small{display:block;font-weight:400;font-size:.75rem;opacity:.85}
+#map{height:300px;border-radius:14px;margin-top:10px;border:1.5px solid var(--line);z-index:0}
+.row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.ghost{
+  flex:1;border:1.5px solid var(--teal);background:transparent;color:var(--teal);
+  border-radius:12px;padding:10px 12px;font:inherit;font-weight:700;cursor:pointer
+}
+@media (prefers-color-scheme: dark){.ghost{color:#fff;border-color:var(--sun)}}
+.status{font-size:.9rem;margin-top:8px;color:var(--mute)}
+.status b{color:var(--ok)}
+.send{
+  width:100%;margin-top:20px;border:0;border-radius:14px;padding:15px;
+  background:var(--sun);color:#1a0f00;font:inherit;font-weight:800;font-size:1.1rem;cursor:pointer
+}
+.send:disabled{opacity:.6}
+.err{color:var(--err);font-weight:700;margin-top:10px;min-height:1.2em}
+.done{text-align:center;padding:26px 10px}
+.done .tick{
+  width:68px;height:68px;border-radius:50%;background:var(--ok);color:#fff;
+  display:grid;place-items:center;font-size:2rem;margin:0 auto 12px
+}
+.done h2{margin:6px 0}
+.install{
+  display:none;margin:14px 0 0;width:100%;border:1.5px dashed var(--teal);color:var(--teal);
+  background:transparent;border-radius:12px;padding:10px;font:inherit;font-weight:700;cursor:pointer
+}
+@media (prefers-color-scheme: dark){.install{color:#fff;border-color:var(--sun)}}
+.ios-tip{display:none;margin-top:14px;font-size:.9rem;color:var(--mute);text-align:center}
+.hidden{display:none!important}
+.pin{background:none;border:0}
+.pin span{
+  display:block;width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+  border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)
+}
+.pin.me span{background:var(--teal)} .pin.shop span{background:var(--sun)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><img src="icon-192.png" alt=""><span>Allo Jibli 18</span></div>
+  <h1>اهدر <span>... يحضر</span></h1>
+  <p>اطلب أي حاجة ونوصلوهالك · جيجل - الطاهير</p>
+  <a class="call" href="tel:0676567947">0676 56 79 47</a>
+</header>
+
+<main>
+  <section class="card" id="formCard">
+    <form id="f" novalidate>
+      <label for="phone">رقم هاتفك</label>
+      <input id="phone" class="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="05 XX XX XX XX" maxlength="14" required>
+
+      <label for="name">الاسم <span class="hint">(اختياري)</span></label>
+      <input id="name" type="text" autocomplete="name" placeholder="اسمك">
+
+      <label for="order">واش تحب نجيبلك؟</label>
+      <div class="chips" id="chips">
+        <button type="button" class="chip">الوجبات</button>
+        <button type="button" class="chip">المشتريات</button>
+        <button type="button" class="chip">الأدوية</button>
+        <button type="button" class="chip">الوثائق والطرود</button>
+      </div>
+      <textarea id="order" placeholder="مثال: 2 بيتزا من محل ... + قارورة ماء كبيرة" required></textarea>
+
+      <label>المواقع على الخريطة <span class="hint">اختر ثم المس الخريطة</span></label>
+      <div class="seg" role="tablist">
+        <button type="button" id="tabMe" class="on" role="tab">موقعي<small>وين نوصلك</small></button>
+        <button type="button" id="tabShop" role="tab">موقع المحل<small>وين نجيبو الطلب</small></button>
+      </div>
+      <div id="map"></div>
+      <div class="row">
+        <button type="button" class="ghost" id="gps">استعمل موقعي الحالي</button>
+        <button type="button" class="ghost" id="clear">مسح الدبوس</button>
+      </div>
+      <div class="status" id="st"></div>
+
+      <label for="addr">وصف المكان <span class="hint">(اختياري، يساعد الموصّل)</span></label>
+      <input id="addr" type="text" placeholder="مثال: قدام المسجد، عمارة 3، الطابق 2">
+
+      <div class="err" id="err" role="alert"></div>
+      <button class="send" id="send" type="submit">إرسال الطلب</button>
+    </form>
+    <button class="install" id="install">ثبّت التطبيق على هاتفك</button>
+    <div class="ios-tip" id="iosTip">على iPhone: اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية»</div>
+  </section>
+
+  <section class="card done hidden" id="doneCard">
+    <div class="tick">✓</div>
+    <h2>وصلنا طلبك</h2>
+    <p>رقم الطلب: <b id="oid"></b><br>غادي نتصلو بيك على <b id="ophone" dir="ltr"></b> قريب.</p>
+    <button class="ghost" id="again" style="width:100%">طلب جديد</button>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* ====== الإعدادات: بدّل هذا الرابط برابط الـ Worker تاعك ====== */
+const WORKER_URL = "https://allojibli-orders.odilcaprino0.workers.dev";
+/* ============================================================== */
+
+const $ = id => document.getElementById(id);
+const CENTER = [36.80, 5.85]; // جيجل - الطاهير
+const map = L.map('map', {zoomControl:true}).setView(CENTER, 11);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom:19, attribution:'© OpenStreetMap'
+}).addTo(map);
+
+const icon = cls => L.divIcon({className:'pin '+cls, html:'<span></span>', iconSize:[34,34], iconAnchor:[8,34]});
+const pins = {me:null, shop:null};
+let active = 'me';
+
+function setPin(kind, latlng){
+  if(pins[kind]) pins[kind].setLatLng(latlng);
+  else{
+    pins[kind] = L.marker(latlng,{icon:icon(kind),draggable:true}).addTo(map);
+    pins[kind].on('dragend', renderStatus);
+  }
+  renderStatus();
+}
+function renderStatus(){
+  const parts=[];
+  if(pins.me) parts.push('<b>✓</b> موقعك محدّد');
+  if(pins.shop) parts.push('<b>✓</b> موقع المحل محدّد');
+  $('st').innerHTML = parts.length ? parts.join(' · ') : 'ما حددتش حتى موقع بعد.';
+}
+renderStatus();
+
+map.on('click', e => setPin(active, e.latlng));
+
+function setTab(k){
+  active=k;
+  $('tabMe').classList.toggle('on',k==='me');
+  $('tabShop').classList.toggle('on',k==='shop');
+}
+$('tabMe').onclick=()=>setTab('me');
+$('tabShop').onclick=()=>setTab('shop');
+
+$('clear').onclick=()=>{
+  if(pins[active]){map.removeLayer(pins[active]);pins[active]=null;renderStatus();}
+};
+
+$('gps').onclick=()=>{
+  if(!navigator.geolocation){$('err').textContent='الهاتف ما يدعمش تحديد الموقع.';return;}
+  $('gps').textContent='جاري التحديد…';
+  navigator.geolocation.getCurrentPosition(p=>{
+    const ll=[p.coords.latitude,p.coords.longitude];
+    setTab('me'); setPin('me',ll); map.setView(ll,16);
+    $('gps').textContent='استعمل موقعي الحالي'; $('err').textContent='';
+  },()=>{
+    $('gps').textContent='استعمل موقعي الحالي';
+    $('err').textContent='ما قدرناش نحددو موقعك. فعّل الموقع أو المس الخريطة.';
+  },{enableHighAccuracy:true,timeout:12000});
+};
+
+// رقم الهاتف الجزائري: 05/06/07 + 8 أرقام (أو +213)
+function normPhone(v){
+  let d=v.replace(/[^\d+]/g,'');
+  if(d.startsWith('+213')) d='0'+d.slice(4);
+  else if(d.startsWith('00213')) d='0'+d.slice(5);
+  return d;
+}
+const okPhone = d => /^0[567]\d{8}$/.test(d) || /^0[23489]\d{7,8}$/.test(d);
+
+let kind='';
+$('chips').onclick=e=>{
+  const b=e.target.closest('.chip'); if(!b) return;
+  const on=!b.classList.contains('on');
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  b.classList.toggle('on',on); kind=on?b.textContent:'';
+};
+$('phone').value = localStorage.getItem('aj_phone')||'';
+$('name').value = localStorage.getItem('aj_name')||'';
+
+$('f').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const phone=normPhone($('phone').value), order=$('order').value.trim(), addr=$('addr').value.trim();
+  $('err').textContent='';
+  if(!okPhone(phone)) return $('err').textContent='رقم الهاتف غير صحيح.';
+  if(order.length<3) return $('err').textContent='اكتب واش تحب نجيبلك.';
+  if(!pins.me && !addr) return $('err').textContent='حدد موقعك على الخريطة أو اكتب العنوان.';
+
+  const ll = k => pins[k] ? {lat:+pins[k].getLatLng().lat.toFixed(6), lng:+pins[k].getLatLng().lng.toFixed(6)} : null;
+  const body={phone, name:$('name').value.trim(), order:(kind?'['+kind+'] ':'')+order, addr, me:ll('me'), shop:ll('shop')};
+
+  $('send').disabled=true; $('send').textContent='جاري الإرسال…';
+  try{
+    const r=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.ok) throw new Error(j.error||'failed');
+    localStorage.setItem('aj_phone',phone); localStorage.setItem('aj_name',body.name);
+    $('oid').textContent='#'+j.id; $('ophone').textContent=phone;
+    $('formCard').classList.add('hidden'); $('doneCard').classList.remove('hidden');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(_){
+    $('err').textContent='ما وصلش الطلب. تأكد من الإنترنت وعاود، ولا اتصل بنا مباشرة.';
+  }finally{
+    $('send').disabled=false; $('send').textContent='إرسال الطلب';
+  }
+});
+
+$('again').onclick=()=>{
+  kind=''; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  $('order').value=''; $('addr').value='';
+  ['me','shop'].forEach(k=>{if(pins[k]){map.removeLayer(pins[k]);pins[k]=null;}});
+  renderStatus(); setTab('me'); map.setView(CENTER,11);
+  $('doneCard').classList.add('hidden'); $('formCard').classList.remove('hidden');
+  setTimeout(()=>map.invalidateSize(),100);
+};
+
+// زر التثبيت
+let deferred=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;$('install').style.display='block';});
+$('install').onclick=async()=>{ if(!deferred) return; deferred.prompt(); await deferred.userChoice; deferred=null; $('install').style.display='none'; };
+window.addEventListener('appinstalled',()=>{$('install').style.display='none';});
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent), standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+if(isIOS && !standalone) $('iosTip').style.display='block';
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
